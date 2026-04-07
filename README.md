@@ -44,6 +44,18 @@ The system balances holding and shortage costs to determine optimal inventory po
 
 ---
 
+## ## Limitations
+
+- Assumes demand follows a normal distribution
+- Does not consider multi-product inventory dependencies
+- Static lead time assumption
+
+## 🔮 Future Work
+
+- Multi-product inventory optimization
+- Real-time demand forecasting using time series models
+- Reinforcement learning for dynamic inventory policies
+
 ## 🛠️ Tech Stack
 - Python  
 - Scikit-learn  
