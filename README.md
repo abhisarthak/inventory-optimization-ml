@@ -1,4 +1,5 @@
 # 📦 AI-Driven Inventory Optimization System
+# Reduced inventory cost by 19.57% using ML + Simulation + Optimization
 
 ## 🚀 Overview
 This project develops a data-driven inventory management system that predicts stockouts and optimizes inventory decisions under demand uncertainty using machine learning, simulation, and optimization techniques.
