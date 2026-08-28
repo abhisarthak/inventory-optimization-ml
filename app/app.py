@@ -4,8 +4,6 @@ import plotly.express as px
 import pandas as pd
 import plotly.express as px
 
-dashboard_data = pd.read_csv("inventory_decision_dashboard.csv")
-
 # ============================================================
 # INVENTORY OPTIMIZATION DECISION DASHBOARD
 # ============================================================
@@ -199,28 +197,51 @@ with col2:
     st.bar_chart(rp_chart)
 
 # ============================================================
-# COST COMPARISON
-# ============================================================
 
-st.subheader("💵 Baseline vs Optimized Cost")
 
-cost_chart = df.set_index("SKU")[
-    ["Baseline Cost", "Optimized Cost"]
-]
 
-st.bar_chart(cost_chart)
+st.subheader("🛡️ Safety Stock by SKU")
 
-# ============================================================
-# INVENTORY BUFFER
-# ============================================================
+df["Safety Stock Coverage (%)"] = (
+    df["Safety Stock"] /
+    df["Forecast Demand"]
+) * 100
 
-st.subheader("🛡️ Inventory Risk Buffer")
+risk_chart_data = df[
+    ["SKU", "Safety Stock", "Safety Stock Coverage (%)"]
+].copy()
 
-buffer_chart = df.set_index("SKU")[
-    ["Inventory Buffer (%)", "Order Uplift (%)"]
-]
+fig_risk = px.bar(
+    risk_chart_data,
+    x="SKU",
+    y="Safety Stock",
+    text="Safety Stock",
+    hover_data={
+        "Safety Stock": ":.2f",
+        "Safety Stock Coverage (%)": ":.2f"
+    },
+    labels={
+        "SKU": "SKU",
+        "Safety Stock": "Safety Stock (units)"
+    }
+)
 
-st.bar_chart(buffer_chart)
+fig_risk.update_traces(
+    texttemplate="%{text:.2f}",
+    textposition="outside"
+)
+
+fig_risk.update_layout(
+    yaxis_title="Safety Stock (units)",
+    xaxis_title="SKU",
+    showlegend=False,
+    height=450
+)
+
+st.plotly_chart(
+    fig_risk,
+    use_container_width=True
+)
 
 # ============================================================
 # COMPLETE DECISION TABLE
@@ -232,7 +253,7 @@ st.bar_chart(buffer_chart)
 
 st.subheader("💵 Baseline vs Optimized Cost")
 
-cost_chart_data = dashboard_data[
+cost_chart_data = df[
     ["SKU", "Baseline Cost", "Optimized Cost"]
 ].copy()
 
@@ -278,7 +299,7 @@ display_columns = [
     "Baseline Cost",
     "Optimized Cost",
     "Cost Reduction (%)",
-    "Inventory Buffer (%)",
+    "Safety Stock Coverage (%)",
     "Order Uplift (%)"
 ]
 
