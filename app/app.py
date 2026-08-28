@@ -347,7 +347,7 @@ with col2:
         "Reorder Point Change",
         f"{reorder_point_change:+.2f}%"
     )
-    
+
 # ------------------------------------------------------------
 # Scenario Interpretation
 # ------------------------------------------------------------
@@ -423,7 +423,7 @@ with col3:
 
 
 # ============================================================
-# RECOMMENDED INVENTORY ACTION
+# RECOMMENDED ACTION
 # ============================================================
 
 st.subheader("🚦 Recommended Inventory Action")
@@ -431,26 +431,55 @@ st.subheader("🚦 Recommended Inventory Action")
 baseline_q = selected["Forecast Demand"]
 optimal_q = selected["Optimal Q"]
 order_uplift = selected["Order Uplift (%)"]
-safety_stock = selected["Safety Stock"]
-reorder_point = selected["Reorder Point"]
+
+st.success(
+    f"### {sku}: Recommended Action"
+)
+
+col1, col2 = st.columns(2)
+
+with col1:
+
+    st.markdown("#### 📦 Ordering Decision")
+
+    st.metric(
+        "Recommended Order Quantity",
+        f"{optimal_q:.0f} units",
+        delta=f"+{order_uplift:.2f}% vs forecast"
+    )
+
+    st.write(
+        f"""
+        The optimization recommends ordering **{optimal_q:.0f} units**
+        instead of using the forecast demand of **{baseline_q:.2f} units**
+        as the order quantity.
+        """
+    )
+
+with col2:
+
+    st.markdown("#### 🛡️ Inventory Protection")
+
+    st.metric(
+        "Safety Stock",
+        f"{selected['Safety Stock']:.2f} units"
+    )
+
+    st.metric(
+        "Reorder Point",
+        f"{selected['Reorder Point']:.2f} units"
+    )
 
 st.info(
     f"""
-    **{sku} Recommendation**
+    **Decision rule:** Reorder **{sku}** when inventory position falls to
+    approximately **{selected['Reorder Point']:.2f} units**.
 
-    Use an order quantity of **{optimal_q:.0f} units** rather than the
-    baseline forecast-based quantity of **{baseline_q:.0f} units**.
-
-    This represents an **{order_uplift:.2f}% order uplift** and provides
-    **{safety_stock:.2f} units of safety stock**.
-
-    Reorder when inventory position reaches approximately
-    **{reorder_point:.2f} units**.
+    Maintain approximately **{selected['Safety Stock']:.2f} units** as
+    protection against demand uncertainty during the **{lead_time}-day
+    lead time**.
     """
 )
-
-st.divider()
-
 
 # ============================================================
 # SKU COMPARISON
@@ -599,6 +628,108 @@ display_columns = [
 
 st.dataframe(
     df[display_columns],
-    use_container_width=True,
+    width="stretch",
     hide_index=True
+)
+
+# ==========================================
+# 💡 KEY DECISION INSIGHTS
+# ==========================================
+
+st.header("💡 Key Decision Insights")
+
+# Identify key SKUs directly from the main dataframe
+highest_safety_stock_sku = df.loc[
+    df["Safety Stock"].idxmax(), "SKU"
+]
+
+highest_safety_stock = df["Safety Stock"].max()
+
+highest_reorder_sku = df.loc[
+    df["Reorder Point"].idxmax(), "SKU"
+]
+
+highest_reorder_point = df["Reorder Point"].max()
+
+highest_savings_sku = df.loc[
+    df["Cost Reduction (%)"].idxmax(), "SKU"
+]
+
+highest_savings = df["Cost Reduction (%)"].max()
+
+# Display insights
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric(
+        "Highest Safety Stock",
+        f"{highest_safety_stock:.2f} units",
+        highest_safety_stock_sku
+    )
+
+with col2:
+    st.metric(
+        "Highest Reorder Point",
+        f"{highest_reorder_point:.2f} units",
+        highest_reorder_sku
+    )
+
+with col3:
+    st.metric(
+        "Highest Cost Reduction",
+        f"{highest_savings:.2f}%",
+        highest_savings_sku
+    )
+
+# ==========================================
+# 🎯 SKU PRIORITY ASSESSMENT
+# ==========================================
+
+st.subheader("🎯 SKU Priority Assessment")
+
+# Rank SKUs based on inventory protection requirements
+df["Safety Stock Rank"] = df["Safety Stock"].rank(
+    ascending=False,
+    method="min"
+)
+
+df["Reorder Point Rank"] = df["Reorder Point"].rank(
+    ascending=False,
+    method="min"
+)
+
+def classify_priority(row):
+    if row["Safety Stock Rank"] == 1 and row["Reorder Point Rank"] == 1:
+        return "🔴 High"
+    elif row["Safety Stock Rank"] <= 2 or row["Reorder Point Rank"] <= 2:
+        return "🟡 Medium"
+    else:
+        return "🟢 Lower"
+
+df["Priority"] = df.apply(classify_priority, axis=1)
+
+priority_columns = [
+    "SKU",
+    "Priority",
+    "Safety Stock",
+    "Reorder Point",
+    "Cost Reduction (%)"
+]
+
+st.dataframe(
+    df[priority_columns],
+    width="stretch",
+    hide_index=True
+)
+
+st.info(
+    f"**Portfolio Insight:** {highest_safety_stock_sku} requires the "
+    f"largest inventory protection, with a safety stock of "
+    f"{highest_safety_stock:.2f} units and a reorder point of "
+    f"{highest_reorder_point:.2f} units. "
+    f"{highest_savings_sku} delivers the highest SKU-level cost reduction "
+    f"of {highest_savings:.2f}%. "
+    f"The optimized inventory policy therefore supports differentiated "
+    f"SKU-level inventory decisions rather than applying a single policy "
+    f"across all products."
 )
