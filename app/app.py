@@ -272,6 +272,26 @@ scenario_reorder_point = (
     + scenario_safety_stock
 )
 
+demand_change_actual = (
+    (scenario_demand - selected["Forecast Demand"])
+    / selected["Forecast Demand"]
+) * 100
+
+uncertainty_change_actual = (
+    (scenario_std - selected["Forecast Error Std"])
+    / selected["Forecast Error Std"]
+) * 100
+
+safety_stock_change = (
+    (scenario_safety_stock - selected["Safety Stock"])
+    / selected["Safety Stock"]
+) * 100
+
+reorder_point_change = (
+    (scenario_reorder_point - selected["Reorder Point"])
+    / selected["Reorder Point"]
+) * 100
+
 # ------------------------------------------------------------
 # Scenario Results
 # ------------------------------------------------------------
@@ -308,6 +328,26 @@ with col4:
         delta=f"{scenario_reorder_point - selected['Reorder Point']:+.2f}"
     )
 
+# ============================================================
+# IMPACT VS BASELINE
+# ============================================================
+
+st.subheader("📌 Impact vs Baseline")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.metric(
+        "Safety Stock Change",
+        f"{safety_stock_change:+.2f}%"
+    )
+
+with col2:
+    st.metric(
+        "Reorder Point Change",
+        f"{reorder_point_change:+.2f}%"
+    )
+    
 # ------------------------------------------------------------
 # Scenario Interpretation
 # ------------------------------------------------------------
